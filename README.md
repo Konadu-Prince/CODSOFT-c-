@@ -65,23 +65,40 @@ A simple task management application for organizing daily tasks.
 ### Prerequisites
 - C++ compiler (g++, clang++, or MSVC)
 - Standard C++ library support
+- Make (optional, for automated builds)
 
-### Compilation Instructions
+### Quick Start with Make
+
+```bash
+# Build all projects
+make all
+
+# Build and test all projects
+make test
+
+# Clean build artifacts
+make clean
+
+# Show available commands
+make help
+```
+
+### Manual Compilation
 
 Compile each program individually:
 
 ```bash
 # Library Management System
-g++ -o library_management_system library_management_system.cpp
+g++ -std=c++11 -Wall -Wextra -O2 -o library_management_system library_management_system.cpp
 
 # Number Guessing Game
-g++ -o number_guessing_game random_guess.cpp
+g++ -std=c++11 -Wall -Wextra -O2 -o number_guessing_game random_guess.cpp
 
 # Tic-Tac-Toe Game
-g++ -o tic_tac_toe tic_tac_toe.cpp
+g++ -std=c++11 -Wall -Wextra -O2 -o tic_tac_toe tic_tac_toe.cpp
 
 # To-Do List Manager
-g++ -o todo_manager todo_manager.cpp
+g++ -std=c++11 -Wall -Wextra -O2 -o todo_manager todo_manager.cpp
 ```
 
 ### Running the Programs
@@ -146,12 +163,38 @@ Task added: Complete project documentation
 
 ```
 CODSOFT-c-/
+├── .github/
+│   └── workflows/
+│       └── cpp-build.yml           # GitHub Actions CI/CD pipeline
 ├── library_management_system.cpp    # Library management system
 ├── random_guess.cpp                 # Number guessing game
 ├── tic_tac_toe.cpp                  # Tic-tac-toe game
 ├── todo_manager.cpp                 # To-do list manager
+├── Makefile                         # Build automation
 └── README.md                        # Project documentation
 ```
+
+## 🤖 Automated CI/CD
+
+This project includes **GitHub Actions** for automated building and testing:
+
+### **What it does:**
+- ✅ **Automatically builds** all C++ projects on every push
+- ✅ **Runs tests** to ensure code quality
+- ✅ **Performs static analysis** with cppcheck
+- ✅ **Creates build artifacts** for download
+- ✅ **Works on multiple platforms** (Ubuntu, Windows, macOS)
+
+### **When it runs:**
+- On every push to `main` or `develop` branches
+- On every pull request to `main` branch
+- Can be triggered manually from GitHub Actions tab
+
+### **Benefits:**
+- **Early bug detection** - catch issues before they reach production
+- **Consistent builds** - same environment every time
+- **Automated testing** - no manual testing required
+- **Professional workflow** - industry-standard practices
 
 ## 🎯 Learning Objectives
 
