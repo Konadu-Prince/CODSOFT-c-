@@ -1,0 +1,164 @@
+name: Desktop App Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Qt6
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.0'
+        modules: 'qtbase qttools qtnetwork'
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libsqlite3-dev
+        
+    - name: Build desktop application
+      run: |
+        cd desktop_app
+        mkdir -p build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j$(nproc)
+        
+    - name: Create AppImage
+      run: |
+        cd desktop_app
+        # Install linuxdeploy
+        wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+        chmod +x linuxdeploy-x86_64.AppImage
+        
+        # Create AppDir
+        mkdir -p AppDir/usr/bin
+        cp build/LibraryManagementSystem AppDir/usr/bin/
+        
+        # Create desktop file
+        cat > AppDir/LibraryManagementSystem.desktop << EOF
+        [Desktop Entry]
+        Name=Library Management System
+        Comment=A modern desktop application for managing library collections
+        Exec=LibraryManagementSystem
+        Icon=library-management-system
+        Terminal=false
+        Type=Application
+        Categories=Office;Education;
+        StartupNotify=true
+        EOF
+        
+        # Create AppImage
+        ./linuxdeploy-x86_64.AppImage --appdir AppDir --output appimage
+        
+    - name: Create DEB package
+      run: |
+        cd desktop_app
+        # Create package structure
+        mkdir -p debian/usr/bin
+        mkdir -p debian/usr/share/applications
+        mkdir -p debian/DEBIAN
+        
+        # Copy binary
+        cp build/LibraryManagementSystem debian/usr/bin/
+        
+        # Create desktop file
+        cat > debian/usr/share/applications/library-management-system.desktop << EOF
+        [Desktop Entry]
+        Name=Library Management System
+        Comment=A modern desktop application for managing library collections
+        Exec=LibraryManagementSystem
+        Icon=library-management-system
+        Terminal=false
+        Type=Application
+        Categories=Office;Education;
+        StartupNotify=true
+        EOF
+        
+        # Create control file
+        cat > debian/DEBIAN/control << EOF
+        Package: library-management-system
+        Version: ${{ github.event.inputs.version || github.ref_name }}
+        Section: office
+        Priority: optional
+        Architecture: amd64
+        Depends: libqt6core6, libqt6widgets6, libqt6network6, libsqlite3-0
+        Maintainer: CODSOFT <info@codsoft.in>
+        Description: Library Management System
+         A modern desktop application for managing library collections.
+         Developed as part of CODSOFT C++ Internship Program.
+        EOF
+        
+        # Build package
+        dpkg-deb --build debian library-management-system_${{ github.event.inputs.version || github.ref_name }}_amd64.deb
+        
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: desktop-app-${{ github.event.inputs.version || github.ref_name }}
+        path: |
+          desktop_app/*.AppImage
+          desktop_app/*.deb
+          
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          desktop_app/*.AppImage
+          desktop_app/*.deb
+        body: |
+          ## Library Management System Desktop App
+          
+          ### What's New
+          - Modern Qt6-based desktop interface
+          - SQLite database for data persistence
+          - Auto-update functionality
+          - Export/Import capabilities
+          - Professional UI with dark theme
+          
+          ### Installation
+          
+          **Linux (AppImage):**
+          1. Download the `.AppImage` file
+          2. Make it executable: `chmod +x LibraryManagementSystem-*.AppImage`
+          3. Run: `./LibraryManagementSystem-*.AppImage`
+          
+          **Linux (DEB Package):**
+          1. Download the `.deb` file
+          2. Install: `sudo dpkg -i library-management-system_*.deb`
+          3. Run from applications menu or: `LibraryManagementSystem`
+          
+          ### Features
+          - 📚 Complete library management
+          - 🔍 Advanced search and filtering
+          - 📊 Statistics and reporting
+          - 💾 Data export/import
+          - 🔄 Auto-update system
+          - 🎨 Modern dark theme
+          
+          ### System Requirements
+          - Linux x86_64
+          - Qt6 runtime libraries
+          - SQLite3
+          
+          ---
+          *Developed as part of CODSOFT C++ Internship Program*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

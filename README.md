@@ -13,7 +13,9 @@ This repository contains 4 C++ applications:
 
 ## 🚀 Projects
 
-### 1. Library Management System (`library_management_system.cpp`)
+### 1. Library Management System
+
+#### Console Version (`library_management_system.cpp`)
 A comprehensive library management system that allows users to:
 - View all books in a formatted catalog
 - Search for books by title, author, ISBN, or genre (case-insensitive)
@@ -30,6 +32,29 @@ A comprehensive library management system that allows users to:
 - **Library Statistics**: Real-time availability tracking and reporting
 - **Robust Error Handling**: Comprehensive validation and user feedback
 - **Professional Sample Data**: Realistic book collection for demonstration
+
+#### Desktop Application (`desktop_app/`)
+A modern Qt6-based desktop application with advanced features:
+
+**🖥️ Desktop Features:**
+- **Modern GUI**: Professional dark theme with responsive design
+- **SQLite Database**: Persistent data storage with automatic backup
+- **Advanced Search**: Real-time filtering and multi-criteria search
+- **Export/Import**: JSON data exchange capabilities
+- **Auto-Update System**: Automatic update checking and installation
+- **Statistics Dashboard**: Real-time library analytics and reporting
+
+**📦 Installation Options:**
+- **AppImage**: Portable, no installation required
+- **DEB Package**: Native Ubuntu/Debian installation
+- **Source Build**: Custom compilation with CMake
+
+**🔧 Technical Features:**
+- **Qt6 Framework**: Modern C++ GUI framework
+- **MVVM Architecture**: Clean separation of concerns
+- **Database Integration**: SQLite with prepared statements
+- **Network Operations**: GitHub API integration for updates
+- **Cross-Platform**: Linux support with Windows/macOS potential
 
 ### 2. Number Guessing Game (`random_guess.cpp`)
 A fun number guessing game where players try to guess a random number between 1 and 100.
@@ -165,8 +190,19 @@ Task added: Complete project documentation
 CODSOFT-c-/
 ├── .github/
 │   └── workflows/
-│       └── cpp-build.yml           # GitHub Actions CI/CD pipeline
-├── library_management_system.cpp    # Library management system
+│       ├── cpp-build.yml           # GitHub Actions CI/CD pipeline
+│       └── desktop-release.yml     # Desktop app release automation
+├── desktop_app/                     # 🆕 Desktop Application
+│   ├── CMakeLists.txt              # Qt6 build configuration
+│   ├── main.cpp                    # Desktop app entry point
+│   ├── mainwindow.h/cpp            # Main window implementation
+│   ├── bookmodel.h/cpp             # Data model for book table
+│   ├── bookdialog.h/cpp            # Add/Edit book dialog
+│   ├── database.h/cpp              # SQLite database operations
+│   ├── updatedialog.h/cpp          # Auto-update system
+│   ├── build.sh                    # Desktop app build script
+│   └── README.md                   # Desktop app documentation
+├── library_management_system.cpp    # Console library management system
 ├── random_guess.cpp                 # Number guessing game
 ├── tic_tac_toe.cpp                  # Tic-tac-toe game
 ├── todo_manager.cpp                 # To-do list manager
