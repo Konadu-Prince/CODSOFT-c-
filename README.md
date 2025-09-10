@@ -15,16 +15,21 @@ This repository contains 4 C++ applications:
 
 ### 1. Library Management System (`library_management_system.cpp`)
 A comprehensive library management system that allows users to:
-- Search for books by title, author, or ISBN
-- Check out books
-- Return books
-- View book availability status
+- View all books in a formatted catalog
+- Search for books by title, author, ISBN, or genre (case-insensitive)
+- Add new books with validation
+- Remove books with confirmation prompts
+- Check out and return books
+- View library statistics and availability rates
 
 **Features:**
-- Book search functionality
-- Checkout/return system
-- ISBN-based book identification
-- Interactive menu system
+- **Enhanced Book Structure**: Includes title, author, ISBN, genre, year, and availability status
+- **Comprehensive Search**: Case-insensitive search across multiple fields
+- **Input Validation**: ISBN format validation, duplicate checking, and error handling
+- **User-Friendly Interface**: Formatted tables, clear menus, and confirmation prompts
+- **Library Statistics**: Real-time availability tracking and reporting
+- **Robust Error Handling**: Comprehensive validation and user feedback
+- **Professional Sample Data**: Realistic book collection for demonstration
 
 ### 2. Number Guessing Game (`random_guess.cpp`)
 A fun number guessing game where players try to guess a random number between 1 and 100.
