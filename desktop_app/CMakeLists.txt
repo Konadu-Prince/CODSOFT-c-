@@ -4,8 +4,8 @@ project(LibraryManagementSystem VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find Qt6 components
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Network)
+# Find Qt5 components (fallback to Qt5 if Qt6 not available)
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets Network)
 
 # Enable Qt's automatic MOC, UIC, and RCC
 set(CMAKE_AUTOMOC ON)
@@ -39,13 +39,13 @@ set(UI_FILES
 )
 
 # Create executable
-qt6_add_executable(LibraryManagementSystem ${SOURCES} ${HEADERS} ${UI_FILES})
+add_executable(LibraryManagementSystem ${SOURCES} ${HEADERS} ${UI_FILES})
 
 # Link Qt libraries
 target_link_libraries(LibraryManagementSystem
-    Qt6::Core
-    Qt6::Widgets
-    Qt6::Network
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::Network
 )
 
 # Set application properties

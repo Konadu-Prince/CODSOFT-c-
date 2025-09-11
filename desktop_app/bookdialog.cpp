@@ -1,6 +1,7 @@
 #include "bookdialog.h"
 #include <QMessageBox>
 #include <QRegularExpression>
+#include <QDate>
 
 BookDialog::BookDialog(QWidget *parent, const Book &book)
     : QDialog(parent)

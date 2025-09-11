@@ -3,6 +3,7 @@
 #include <QPalette>
 #include <QDir>
 #include <QStandardPaths>
+#include <QDesktopWidget>
 #include "mainwindow.h"
 #include "database.h"
 

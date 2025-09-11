@@ -9,6 +9,7 @@
 #include <QJsonArray>
 #include <QHeaderView>
 #include <QApplication>
+#include <QDesktopWidget>
 #include <QDesktopServices>
 #include <QUrl>
 
@@ -30,9 +31,10 @@ MainWindow::MainWindow(QWidget *parent)
     resize(1200, 800);
     
     // Center window on screen
+    QDesktopWidget *desktop = QApplication::desktop();
     setGeometry(
-        QApplication::desktop()->screen()->rect().center().x() - width()/2,
-        QApplication::desktop()->screen()->rect().center().y() - height()/2,
+        desktop->screen()->rect().center().x() - width()/2,
+        desktop->screen()->rect().center().y() - height()/2,
         width(),
         height()
     );
