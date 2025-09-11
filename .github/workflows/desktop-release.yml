@@ -12,9 +12,8 @@ on:
         default: '1.0.0'
 
 jobs:
-  build-and-release:
+  build-linux:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -106,21 +105,207 @@ jobs:
         # Build package
         dpkg-deb --build debian library-management-system_${{ github.event.inputs.version || github.ref_name }}_amd64.deb
         
-    - name: Upload release artifacts
+    - name: Upload Linux artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: desktop-app-${{ github.event.inputs.version || github.ref_name }}
+        name: linux-desktop-app-${{ github.event.inputs.version || github.ref_name }}
         path: |
           desktop_app/*.AppImage
           desktop_app/*.deb
-          
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Qt6
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.0'
+        modules: 'qtbase qttools qtnetwork'
+        
+    - name: Install dependencies
+      run: |
+        # Install NSIS for creating Windows installer
+        choco install nsis -y
+        
+    - name: Build desktop application
+      run: |
+        cd desktop_app
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+        cmake --build . --config Release
+        
+    - name: Create Windows installer
+      run: |
+        cd desktop_app
+        # Create NSIS script
+        cat > installer.nsi << 'EOF'
+        !define APPNAME "Library Management System"
+        !define COMPANYNAME "CODSOFT"
+        !define DESCRIPTION "A modern desktop application for managing library collections"
+        !define VERSIONMAJOR 1
+        !define VERSIONMINOR 0
+        !define VERSIONBUILD 0
+        !define HELPURL "https://github.com/Konadu-Prince/CODSOFT-c-"
+        !define UPDATEURL "https://github.com/Konadu-Prince/CODSOFT-c-/releases"
+        !define ABOUTURL "https://www.codsoft.in"
+        !define INSTALLSIZE 50000
+
+        RequestExecutionLevel admin
+        InstallDir "$PROGRAMFILES64\${APPNAME}"
+        Name "${APPNAME}"
+        outFile "LibraryManagementSystem-${{ github.event.inputs.version || github.ref_name }}-win64.exe"
+
+        !include LogicLib.nsh
+
+        page directory
+        page instfiles
+
+        !macro VerifyUserIsAdmin
+        UserInfo::GetAccountType
+        pop $0
+        ${If} $0 != "admin"
+            messageBox mb_iconstop "Administrator rights required!"
+            setErrorLevel 740
+            quit
+        ${EndIf}
+        !macroend
+
+        function .onInit
+            setShellVarContext all
+            !insertmacro VerifyUserIsAdmin
+        functionEnd
+
+        section "install"
+            setOutPath $INSTDIR
+            file "build\Release\LibraryManagementSystem.exe"
+            
+            writeUninstaller "$INSTDIR\uninstall.exe"
+            
+            createDirectory "$SMPROGRAMS\${APPNAME}"
+            createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\LibraryManagementSystem.exe"
+            createShortCut "$SMPROGRAMS\${APPNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+            createShortCut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\LibraryManagementSystem.exe"
+            
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME}"
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "InstallLocation" "$\"$INSTDIR$\""
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "Publisher" "${COMPANYNAME}"
+            WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion" "${VERSIONMAJOR}.${VERSIONMINOR}.${VERSIONBUILD}"
+        sectionEnd
+
+        section "uninstall"
+            delete "$INSTDIR\LibraryManagementSystem.exe"
+            delete "$INSTDIR\uninstall.exe"
+            
+            delete "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk"
+            delete "$SMPROGRAMS\${APPNAME}\Uninstall.lnk"
+            delete "$DESKTOP\${APPNAME}.lnk"
+            rmDir "$SMPROGRAMS\${APPNAME}"
+            
+            DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+            
+            rmDir $INSTDIR
+        sectionEnd
+        EOF
+        
+        # Create installer
+        makensis installer.nsi
+        
+    - name: Upload Windows artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-desktop-app-${{ github.event.inputs.version || github.ref_name }}
+        path: |
+          desktop_app/*.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Qt6
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.5.0'
+        modules: 'qtbase qttools qtnetwork'
+        
+    - name: Install dependencies
+      run: |
+        brew install cmake sqlite
+        
+    - name: Build desktop application
+      run: |
+        cd desktop_app
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j$(sysctl -n hw.ncpu)
+        
+    - name: Create macOS bundle
+      run: |
+        cd desktop_app
+        # Create macOS app bundle
+        mkdir -p "Library Management System.app/Contents/MacOS"
+        mkdir -p "Library Management System.app/Contents/Resources"
+        
+        # Copy executable
+        cp build/LibraryManagementSystem "Library Management System.app/Contents/MacOS/"
+        
+        # Create Info.plist
+        cat > "Library Management System.app/Contents/Info.plist" << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleExecutable</key>
+            <string>Library Management System</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.codsoft.library-management-system</string>
+            <key>CFBundleName</key>
+            <string>Library Management System</string>
+            <key>CFBundleVersion</key>
+            <string>${{ github.event.inputs.version || github.ref_name }}</string>
+            <key>CFBundleShortVersionString</key>
+            <string>${{ github.event.inputs.version || github.ref_name }}</string>
+            <key>CFBundleInfoDictionaryVersion</key>
+            <string>6.0</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+        </dict>
+        </plist>
+        EOF
+        
+        # Create DMG
+        hdiutil create -volname "Library Management System" -srcfolder "Library Management System.app" -ov -format UDZO "LibraryManagementSystem-${{ github.event.inputs.version || github.ref_name }}-macos.dmg"
+        
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-desktop-app-${{ github.event.inputs.version || github.ref_name }}
+        path: |
+          desktop_app/*.dmg
+
+  release:
+    needs: [build-linux, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
     - name: Create GitHub Release
-      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          desktop_app/*.AppImage
-          desktop_app/*.deb
+          linux-desktop-app-*/LibraryManagementSystem-*.AppImage
+          linux-desktop-app-*/library-management-system_*.deb
+          windows-desktop-app-*/LibraryManagementSystem-*-win64.exe
+          macos-desktop-app-*/LibraryManagementSystem-*-macos.dmg
         body: |
           ## Library Management System Desktop App
           
@@ -130,6 +315,7 @@ jobs:
           - Auto-update functionality
           - Export/Import capabilities
           - Professional UI with dark theme
+          - Cross-platform support (Linux, Windows, macOS)
           
           ### Installation
           
@@ -143,6 +329,17 @@ jobs:
           2. Install: `sudo dpkg -i library-management-system_*.deb`
           3. Run from applications menu or: `LibraryManagementSystem`
           
+          **Windows:**
+          1. Download the `.exe` installer
+          2. Run the installer as administrator
+          3. Follow the installation wizard
+          4. Launch from Start Menu or Desktop shortcut
+          
+          **macOS:**
+          1. Download the `.dmg` file
+          2. Open the DMG and drag to Applications
+          3. Run from Applications folder
+          
           ### Features
           - 📚 Complete library management
           - 🔍 Advanced search and filtering
@@ -150,11 +347,12 @@ jobs:
           - 💾 Data export/import
           - 🔄 Auto-update system
           - 🎨 Modern dark theme
+          - 🌍 Cross-platform compatibility
           
           ### System Requirements
-          - Linux x86_64
-          - Qt6 runtime libraries
-          - SQLite3
+          - **Linux**: x86_64, Qt6 runtime libraries, SQLite3
+          - **Windows**: Windows 10+, Visual C++ Redistributable
+          - **macOS**: macOS 10.15+, Qt6 runtime libraries
           
           ---
           *Developed as part of CODSOFT C++ Internship Program*
